@@ -4,7 +4,7 @@
 
 ## 技術スタック
 
-React + Vite + TypeScript / Tailwind CSS / Firebase (Authentication, Firestore, Storage, Hosting)
+React + Vite + TypeScript / Tailwind CSS / Firebase (Authentication, Firestore, Storage) / Netlify (Hosting)
 
 ## セットアップ
 
@@ -26,9 +26,16 @@ npm run dev
 
 ## デプロイ
 
+### サイト本体(Netlify)
+
+GitHubリポジトリをNetlifyに連携し、Git pushで自動デプロイされる。ビルド設定は [netlify.toml](./netlify.toml) を参照(`npm run build` → `dist/` を公開)。Netlify側の環境変数に `.env.local` と同じ `VITE_FIREBASE_*` の値を設定する必要がある。
+
+### Firestore / Storage セキュリティルール
+
 ```bash
-npm run build
-firebase deploy
+npm install -g firebase-tools   # 未インストールの場合
+firebase login
+firebase deploy --only firestore:rules,storage
 ```
 
 `.firebaserc` の `default` に自分のFirebaseプロジェクトIDを設定してから実行する。
