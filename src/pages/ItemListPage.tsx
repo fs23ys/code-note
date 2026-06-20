@@ -42,6 +42,34 @@ export function ItemListPage() {
     })
   }, [items, selectedCategories, selectedTags, selectedBrand, keyword])
 
+  const groupedItems = useMemo(() => {
+    const remaining = new Map<string, typeof filteredItems>()
+    filteredItems.forEach((item) => {
+      const list = remaining.get(item.category) ?? []
+      list.push(item)
+      remaining.set(item.category, list)
+    })
+
+    const groups: { key: string; name: string; items: typeof filteredItems }[] = []
+
+    categories.forEach((category) => {
+      const list = remaining.get(category.id)
+      if (list && list.length > 0) {
+        groups.push({ key: category.id, name: category.name, items: list })
+        remaining.delete(category.id)
+      }
+    })
+
+    // カテゴリ一覧に存在しない自由入力のカテゴリ文字列をまとめる(未削除データ等)
+    Array.from(remaining.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([categoryValue, list]) => {
+        groups.push({ key: categoryValue, name: categoryValue, items: list })
+      })
+
+    return groups
+  }, [filteredItems, categories])
+
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId) ? prev.filter((c) => c !== categoryId) : [...prev, categoryId],
@@ -83,9 +111,18 @@ export function ItemListPage() {
       ) : filteredItems.length === 0 ? (
         <p className="text-sm text-gray-400">条件に合う服がありません</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {filteredItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
+        <div className="flex flex-col gap-6">
+          {groupedItems.map((group) => (
+            <section key={group.key} className="flex flex-col gap-3">
+              <h3 className="text-sm font-bold text-gray-600">
+                {group.name} <span className="text-gray-400">({group.items.length})</span>
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {group.items.map((item) => (
+                  <ItemCard key={item.id} item={item} />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
