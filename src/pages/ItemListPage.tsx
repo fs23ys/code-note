@@ -1,0 +1,94 @@
+﻿import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { FilterBar } from '../components/FilterBar'
+import { ItemCard } from '../components/ItemCard'
+import { useAuth } from '../hooks/useAuth'
+import { useCategories } from '../hooks/useCategories'
+import { useItems } from '../hooks/useItems'
+
+export function ItemListPage() {
+  const { user } = useAuth()
+  const { items, loading } = useItems(user?.uid)
+  const { categories } = useCategories(user?.uid)
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedBrand, setSelectedBrand] = useState('')
+  const [keyword, setKeyword] = useState('')
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    items.forEach((item) => item.tags.forEach((tag) => set.add(tag)))
+    return Array.from(set).sort()
+  }, [items])
+
+  const allBrands = useMemo(() => {
+    const set = new Set<string>()
+    items.forEach((item) => item.brand && set.add(item.brand))
+    return Array.from(set).sort()
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+    const kw = keyword.trim().toLowerCase()
+    return items.filter((item) => {
+      if (selectedCategories.length > 0 && !selectedCategories.includes(item.category)) return false
+      if (selectedTags.length > 0 && !selectedTags.every((tag) => item.tags.includes(tag))) return false
+      if (selectedBrand && item.brand !== selectedBrand) return false
+      if (kw) {
+        const haystack = `${item.brand ?? ''} ${item.memo ?? ''}`.toLowerCase()
+        if (!haystack.includes(kw)) return false
+      }
+      return true
+    })
+  }, [items, selectedCategories, selectedTags, selectedBrand, keyword])
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId) ? prev.filter((c) => c !== categoryId) : [...prev, categoryId],
+    )
+  }
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">服一覧</h2>
+        <Link
+          to="/items/new"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          + 新規登録
+        </Link>
+      </div>
+
+      <FilterBar
+        categories={categories}
+        allTags={allTags}
+        allBrands={allBrands}
+        selectedCategories={selectedCategories}
+        selectedTags={selectedTags}
+        selectedBrand={selectedBrand}
+        keyword={keyword}
+        onToggleCategory={toggleCategory}
+        onToggleTag={toggleTag}
+        onBrandChange={setSelectedBrand}
+        onKeywordChange={setKeyword}
+      />
+
+      {loading ? (
+        <p className="text-sm text-gray-400">読み込み中...</p>
+      ) : filteredItems.length === 0 ? (
+        <p className="text-sm text-gray-400">条件に合う服がありません</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {filteredItems.map((item) => (
+            <ItemCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
