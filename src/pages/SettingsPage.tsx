@@ -19,11 +19,17 @@ export function SettingsPage() {
   const [newName, setNewName] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [error, setError] = useState('')
 
   const handleAdd = async () => {
     if (!user || !newName.trim()) return
-    await addCategory(user.uid, newName.trim(), categories.length)
-    setNewName('')
+    setError('')
+    try {
+      await addCategory(user.uid, newName.trim(), categories.length)
+      setNewName('')
+    } catch {
+      setError('カテゴリの追加に失敗しました。もう一度お試しください')
+    }
   }
 
   const startEdit = (id: string, name: string) => {
@@ -130,6 +136,8 @@ export function SettingsPage() {
           </li>
         ))}
       </ul>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-2">
         <input
