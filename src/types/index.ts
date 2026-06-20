@@ -2,6 +2,7 @@ export interface ClosetItem {
   id: string
   photos: string[]
   mainPhotoIndex: number
+  name?: string
   category: string
   brand?: string
   store?: string

@@ -14,6 +14,7 @@ export function ItemNewPage() {
 
   const [files, setFiles] = useState<File[]>([])
   const [mainPhotoIndex, setMainPhotoIndex] = useState(0)
+  const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [brand, setBrand] = useState('')
   const [store, setStore] = useState('')
@@ -60,6 +61,7 @@ export function ItemNewPage() {
       await createItem(user.uid, itemId, {
         photos,
         mainPhotoIndex,
+        name: name || undefined,
         category,
         brand: brand || undefined,
         store: store || undefined,
@@ -68,8 +70,10 @@ export function ItemNewPage() {
         tags,
       })
       navigate(`/items/${itemId}`)
-    } catch {
-      setError('登録に失敗しました。もう一度お試しください')
+    } catch (err) {
+      console.error('Failed to create item', err)
+      const message = err instanceof Error ? err.message : String(err)
+      setError(`登録に失敗しました: ${message}`)
     } finally {
       setSubmitting(false)
     }
@@ -86,6 +90,17 @@ export function ItemNewPage() {
         onRemove={handleRemove}
         onSetMain={setMainPhotoIndex}
       />
+
+      <label className="flex flex-col gap-1 text-sm text-gray-600">
+        服の名前
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="例: お気に入りの白シャツ"
+          className="rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
+        />
+      </label>
 
       <label className="flex flex-col gap-1 text-sm text-gray-600">
         カテゴリ

@@ -23,6 +23,7 @@ export function useItems(uid: string | undefined) {
             id: d.id,
             photos: data.photos ?? [],
             mainPhotoIndex: data.mainPhotoIndex ?? 0,
+            name: data.name,
             category: data.category ?? '',
             brand: data.brand,
             store: data.store,

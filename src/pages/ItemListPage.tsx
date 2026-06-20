@@ -35,7 +35,7 @@ export function ItemListPage() {
       if (selectedTags.length > 0 && !selectedTags.every((tag) => item.tags.includes(tag))) return false
       if (selectedBrand && item.brand !== selectedBrand) return false
       if (kw) {
-        const haystack = `${item.brand ?? ''} ${item.memo ?? ''}`.toLowerCase()
+        const haystack = `${item.name ?? ''} ${item.brand ?? ''} ${item.memo ?? ''}`.toLowerCase()
         if (!haystack.includes(kw)) return false
       }
       return true

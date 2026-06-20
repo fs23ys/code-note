@@ -17,7 +17,7 @@ export function ItemCard({ item }: { item: ClosetItem }) {
         )}
       </div>
       <div className="flex flex-col gap-0.5 p-2">
-        <span className="truncate text-xs font-medium text-gray-800">{item.category}</span>
+        <span className="truncate text-xs font-medium text-gray-800">{item.name || item.category}</span>
         {item.brand && <span className="truncate text-xs text-gray-500">{item.brand}</span>}
       </div>
     </Link>
