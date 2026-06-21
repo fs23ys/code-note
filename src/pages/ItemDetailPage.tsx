@@ -7,6 +7,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useItems } from '../hooks/useItems'
 import { deleteItem, updateItem } from '../lib/items'
 import { deleteItemPhoto, uploadItemPhoto } from '../lib/storage'
+import { sortTags } from '../lib/tagOrder'
 
 export function ItemDetailPage() {
   const { itemId } = useParams<{ itemId: string }>()
@@ -172,7 +173,7 @@ export function ItemDetailPage() {
 
         {item.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {item.tags.map((tag) => (
+            {sortTags(item.tags).map((tag) => (
               <span key={tag} className="rounded-full bg-indigo-100 px-3 py-1 text-xs text-indigo-700">
                 #{tag}
               </span>

@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent } from 'react'
+import { sortTags } from '../lib/tagOrder'
 
 interface TagInputProps {
   tags: string[]
@@ -30,7 +31,7 @@ export function TagInput({ tags, onChange }: TagInputProps) {
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        {tags.map((tag) => (
+        {sortTags(tags).map((tag) => (
           <span
             key={tag}
             className="flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-xs text-indigo-700"

@@ -5,6 +5,16 @@ import { ItemCard } from '../components/ItemCard'
 import { useAuth } from '../hooks/useAuth'
 import { useCategories } from '../hooks/useCategories'
 import { useItems } from '../hooks/useItems'
+import { sortTags } from '../lib/tagOrder'
+
+type SortOrder = 'newest' | 'oldest' | 'price-desc' | 'price-asc'
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'newest', label: '登録が新しい順' },
+  { value: 'oldest', label: '登録が古い順' },
+  { value: 'price-desc', label: '価格が高い順' },
+  { value: 'price-asc', label: '価格が低い順' },
+]
 
 export function ItemListPage() {
   const { user } = useAuth()
@@ -15,11 +25,12 @@ export function ItemListPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState('')
   const [keyword, setKeyword] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
     items.forEach((item) => item.tags.forEach((tag) => set.add(tag)))
-    return Array.from(set).sort()
+    return sortTags(Array.from(set))
   }, [items])
 
   const allBrands = useMemo(() => {
@@ -30,7 +41,7 @@ export function ItemListPage() {
 
   const filteredItems = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
-    return items.filter((item) => {
+    const filtered = items.filter((item) => {
       if (selectedCategories.length > 0 && !selectedCategories.includes(item.category)) return false
       if (selectedTags.length > 0 && !selectedTags.every((tag) => item.tags.includes(tag))) return false
       if (selectedBrand && item.brand !== selectedBrand) return false
@@ -40,7 +51,23 @@ export function ItemListPage() {
       }
       return true
     })
-  }, [items, selectedCategories, selectedTags, selectedBrand, keyword])
+
+    const sorted = [...filtered]
+    switch (sortOrder) {
+      case 'oldest':
+        sorted.sort((a, b) => a.createdAt - b.createdAt)
+        break
+      case 'price-desc':
+        sorted.sort((a, b) => (b.price ?? -1) - (a.price ?? -1))
+        break
+      case 'price-asc':
+        sorted.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))
+        break
+      default:
+        sorted.sort((a, b) => b.createdAt - a.createdAt)
+    }
+    return sorted
+  }, [items, selectedCategories, selectedTags, selectedBrand, keyword, sortOrder])
 
   const groupedItems = useMemo(() => {
     const remaining = new Map<string, typeof filteredItems>()
@@ -105,6 +132,21 @@ export function ItemListPage() {
         onBrandChange={setSelectedBrand}
         onKeywordChange={setKeyword}
       />
+
+      <label className="flex items-center gap-2 self-end text-sm text-gray-600">
+        並び替え
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       {loading ? (
         <p className="text-sm text-gray-400">読み込み中...</p>

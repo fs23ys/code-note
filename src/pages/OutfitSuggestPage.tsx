@@ -32,6 +32,7 @@ export function OutfitSuggestPage() {
       const outfitId = await createOutfit(user.uid, {
         itemIds: suggestion.itemIds,
         tags: [],
+        wornDates: [],
       })
       navigate(`/outfits/${outfitId}`)
     } finally {

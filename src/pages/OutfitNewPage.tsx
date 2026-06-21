@@ -35,6 +35,7 @@ export function OutfitNewPage() {
         itemIds: selectedIds,
         tags,
         memo: memo || undefined,
+        wornDates: [],
       })
       navigate(`/outfits/${outfitId}`)
     } catch {

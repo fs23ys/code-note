@@ -25,6 +25,7 @@ export function useOutfits(uid: string | undefined) {
             itemIds: data.itemIds ?? [],
             tags: data.tags ?? [],
             memo: data.memo,
+            wornDates: data.wornDates ?? [],
             createdAt: toMillis(data.createdAt),
             updatedAt: toMillis(data.updatedAt),
           } satisfies Outfit

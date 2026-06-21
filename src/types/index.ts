@@ -21,6 +21,8 @@ export interface Outfit {
   itemIds: string[]
   tags: string[]
   memo?: string
+  /** 着用した日付の一覧(YYYY-MM-DD形式) */
+  wornDates: string[]
   createdAt: number
   updatedAt: number
 }
