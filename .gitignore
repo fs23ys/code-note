@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Claude Codeでコーデ提案する際にFirebaseから取得する管理者用認証情報・画像キャッシュ
+serviceAccountKey.json
+ai-closet-data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
