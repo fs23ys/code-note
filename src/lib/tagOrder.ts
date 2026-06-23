@@ -1,18 +1,10 @@
-const TAG_PRIORITY = [
-  'オフィス',
-  'デート',
-  'お出かけ',
-  '旅行',
-  '春',
-  '夏',
-  '秋',
-  '冬',
-  'きれいめ',
-  'ストリート',
-  'モノトーン',
-  'シンプル',
-  '甘め',
+export const TAG_GROUPS = [
+  { label: 'シーン', tags: ['オフィス', 'デート', 'お出かけ', '旅行'] },
+  { label: '季節', tags: ['春', '夏', '秋', '冬'] },
+  { label: 'スタイル', tags: ['きれいめ', 'ストリート', 'モノトーン', 'シンプル', '甘め'] },
 ]
+
+const TAG_PRIORITY = TAG_GROUPS.flatMap((group) => group.tags)
 
 const PRIORITY_INDEX = new Map(TAG_PRIORITY.map((tag, index) => [tag, index]))
 
