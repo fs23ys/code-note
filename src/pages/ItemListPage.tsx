@@ -15,11 +15,11 @@ import type { ClosetItem } from '../types'
 type SortOrder = 'newest' | 'oldest' | 'price-desc' | 'price-asc' | 'custom'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'custom', label: 'カスタム順(ドラッグで並び替え)' },
   { value: 'newest', label: '登録が新しい順' },
   { value: 'oldest', label: '登録が古い順' },
   { value: 'price-desc', label: '価格が高い順' },
   { value: 'price-asc', label: '価格が低い順' },
-  { value: 'custom', label: 'カスタム順(ドラッグで並び替え)' },
 ]
 
 export function ItemListPage() {
@@ -31,7 +31,7 @@ export function ItemListPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState('')
   const [keyword, setKeyword] = useState('')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('custom')
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
