@@ -7,6 +7,7 @@ function makeItem(overrides: Partial<ClosetItem> & { id: string; category: strin
     photos: ['photo.jpg'],
     mainPhotoIndex: 0,
     tags: [],
+    order: 0,
     createdAt: 0,
     updatedAt: 0,
     ...overrides,

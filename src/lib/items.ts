@@ -22,6 +22,7 @@ export function newItemId(uid: string) {
 export async function createItem(uid: string, itemId: string, input: ClosetItemInput) {
   await setDoc(doc(itemsCol(uid), itemId), {
     ...input,
+    order: Date.now(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -36,6 +37,15 @@ export async function updateItem(uid: string, itemId: string, input: Partial<Clo
 
 export async function deleteItem(uid: string, itemId: string) {
   await deleteDoc(doc(itemsCol(uid), itemId))
+}
+
+/** ドラッグ&ドロップでの並び替え結果を保存する(配列のインデックスをそのまま並び順として書き込む) */
+export async function reorderItems(uid: string, items: ClosetItem[]) {
+  const batch = writeBatch(db)
+  items.forEach((item, index) => {
+    batch.update(doc(itemsCol(uid), item.id), { order: index, updatedAt: serverTimestamp() })
+  })
+  await batch.commit()
 }
 
 /** カテゴリ削除時に、使用中のアイテムを別カテゴリへ一括で付け替える */

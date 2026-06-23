@@ -9,11 +9,13 @@ export interface ClosetItem {
   price?: number
   memo?: string
   tags: string[]
+  /** 服一覧でのカスタム並び順(ドラッグ&ドロップで変更可能) */
+  order: number
   createdAt: number
   updatedAt: number
 }
 
-export type ClosetItemInput = Omit<ClosetItem, 'id' | 'createdAt' | 'updatedAt'>
+export type ClosetItemInput = Omit<ClosetItem, 'id' | 'order' | 'createdAt' | 'updatedAt'>
 
 export interface Outfit {
   id: string

@@ -30,6 +30,7 @@ export function useItems(uid: string | undefined) {
             price: data.price,
             memo: data.memo,
             tags: data.tags ?? [],
+            order: typeof data.order === 'number' ? data.order : toMillis(data.createdAt),
             createdAt: toMillis(data.createdAt),
             updatedAt: toMillis(data.updatedAt),
           } satisfies ClosetItem

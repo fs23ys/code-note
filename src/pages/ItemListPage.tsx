@@ -1,19 +1,25 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FilterBar } from '../components/FilterBar'
 import { ItemCard } from '../components/ItemCard'
+import { SortableItemCard } from '../components/SortableItemCard'
 import { useAuth } from '../hooks/useAuth'
 import { useCategories } from '../hooks/useCategories'
 import { useItems } from '../hooks/useItems'
+import { reorderItems } from '../lib/items'
 import { sortTags } from '../lib/tagOrder'
+import type { ClosetItem } from '../types'
 
-type SortOrder = 'newest' | 'oldest' | 'price-desc' | 'price-asc'
+type SortOrder = 'newest' | 'oldest' | 'price-desc' | 'price-asc' | 'custom'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'newest', label: '登録が新しい順' },
   { value: 'oldest', label: '登録が古い順' },
   { value: 'price-desc', label: '価格が高い順' },
   { value: 'price-asc', label: '価格が低い順' },
+  { value: 'custom', label: 'カスタム順(ドラッグで並び替え)' },
 ]
 
 export function ItemListPage() {
@@ -63,6 +69,9 @@ export function ItemListPage() {
       case 'price-asc':
         sorted.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))
         break
+      case 'custom':
+        sorted.sort((a, b) => a.order - b.order)
+        break
       default:
         sorted.sort((a, b) => b.createdAt - a.createdAt)
     }
@@ -107,6 +116,18 @@ export function ItemListPage() {
     setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  const handleDragEnd = (groupItems: ClosetItem[]) => async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!user || !over || active.id === over.id) return
+    const oldIndex = groupItems.findIndex((item) => item.id === active.id)
+    const newIndex = groupItems.findIndex((item) => item.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const reordered = arrayMove(groupItems, oldIndex, newIndex)
+    await reorderItems(user.uid, reordered)
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -148,6 +169,10 @@ export function ItemListPage() {
         </select>
       </label>
 
+      {sortOrder === 'custom' && (
+        <p className="text-xs text-gray-400">カードの左上の「≡」をドラッグすると、カテゴリ内で並び順を変更できます</p>
+      )}
+
       {loading ? (
         <p className="text-sm text-gray-400">読み込み中...</p>
       ) : filteredItems.length === 0 ? (
@@ -159,11 +184,23 @@ export function ItemListPage() {
               <h3 className="text-sm font-bold text-gray-600">
                 {group.name} <span className="text-gray-400">({group.items.length})</span>
               </h3>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {group.items.map((item) => (
-                  <ItemCard key={item.id} item={item} />
-                ))}
-              </div>
+              {sortOrder === 'custom' ? (
+                <DndContext sensors={sensors} onDragEnd={handleDragEnd(group.items)}>
+                  <SortableContext items={group.items.map((item) => item.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {group.items.map((item) => (
+                        <SortableItemCard key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {group.items.map((item) => (
+                    <ItemCard key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
             </section>
           ))}
         </div>
