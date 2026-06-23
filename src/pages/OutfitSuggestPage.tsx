@@ -1,29 +1,53 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useCategories } from '../hooks/useCategories'
 import { useItems } from '../hooks/useItems'
 import { useOutfits } from '../hooks/useOutfits'
 import { generateOutfitSuggestion, type OutfitSuggestion } from '../lib/outfitSuggest'
 import { createOutfit } from '../lib/outfits'
+import type { Category } from '../types'
+
+// カテゴリ名は設定画面でいつでも変更できる(絵文字を付けたり「靴」→「シューズ」に変えたりも可能)ため、
+// 完全一致ではなくキーワードの部分一致でカテゴリIDを解決する
+const REQUIRED_KEYWORDS = [['トップス'], ['ボトムス'], ['靴', 'シューズ']]
+
+function resolveRequiredCategoryIds(categories: Category[]): string[] {
+  return REQUIRED_KEYWORDS.map((keywords) =>
+    categories.find((c) => keywords.some((kw) => c.name.includes(kw)))?.id,
+  ).filter((id): id is string => Boolean(id))
+}
 
 export function OutfitSuggestPage() {
   const { user } = useAuth()
   const { items, loading: itemsLoading } = useItems(user?.uid)
   const { outfits, loading: outfitsLoading } = useOutfits(user?.uid)
+  const { categories, loading: categoriesLoading } = useCategories(user?.uid)
   const navigate = useNavigate()
 
   const [suggestion, setSuggestion] = useState<OutfitSuggestion | null>(null)
   const [attempted, setAttempted] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const requiredCategoryIds = useMemo(() => resolveRequiredCategoryIds(categories), [categories])
+  const optionalCategoryIds = useMemo(
+    () => categories.map((c) => c.id).filter((id) => !requiredCategoryIds.includes(id)),
+    [categories, requiredCategoryIds],
+  )
+
   const regenerate = useCallback(() => {
-    setSuggestion(generateOutfitSuggestion(items, outfits))
+    setSuggestion(
+      generateOutfitSuggestion(items, outfits, {
+        requiredCategories: requiredCategoryIds,
+        optionalCategories: optionalCategoryIds,
+      }),
+    )
     setAttempted(true)
-  }, [items, outfits])
+  }, [items, outfits, requiredCategoryIds, optionalCategoryIds])
 
   useEffect(() => {
-    if (!itemsLoading && !outfitsLoading && !attempted) regenerate()
-  }, [itemsLoading, outfitsLoading, attempted, regenerate])
+    if (!itemsLoading && !outfitsLoading && !categoriesLoading && !attempted) regenerate()
+  }, [itemsLoading, outfitsLoading, categoriesLoading, attempted, regenerate])
 
   const handleSave = async () => {
     if (!user || !suggestion) return
@@ -51,7 +75,7 @@ export function OutfitSuggestPage() {
         トップス・ボトムス・靴を中心に、タグの一致度が高い組み合わせをランダムに提案します。
       </p>
 
-      {itemsLoading || outfitsLoading ? (
+      {itemsLoading || outfitsLoading || categoriesLoading ? (
         <p className="text-sm text-gray-400">読み込み中...</p>
       ) : !suggestion ? (
         <p className="text-sm text-gray-400">
