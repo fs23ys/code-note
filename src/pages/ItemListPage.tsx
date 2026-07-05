@@ -32,6 +32,8 @@ export function ItemListPage() {
   const [selectedBrand, setSelectedBrand] = useState('')
   const [keyword, setKeyword] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('custom')
+  const [showAiExport, setShowAiExport] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -106,6 +108,36 @@ export function ItemListPage() {
     return groups
   }, [filteredItems, categories])
 
+  const aiExportText = useMemo(() => {
+    const lines: string[] = [
+      'あなたはファッションの専門家です。以下は私が現在持っている服の一覧です。これを参考に、今後購入するとコーデの幅が広がるアイテムをカテゴリ・スタイル・季節の観点から具体的に提案してください。',
+      '',
+      '---',
+      '',
+    ]
+    categories.forEach((cat) => {
+      const catItems = items.filter((item) => item.category === cat.id)
+      if (catItems.length === 0) return
+      lines.push(`## ${cat.name} (${catItems.length}点)`)
+      catItems.forEach((item) => {
+        const parts: string[] = []
+        if (item.name) parts.push(item.name)
+        if (item.brand) parts.push(`ブランド: ${item.brand}`)
+        if (item.tags.length > 0) parts.push(`タグ: ${sortTags(item.tags).join('・')}`)
+        lines.push(`- ${parts.length > 0 ? parts.join(' / ') : '(名前・タグなし)'}`)
+      })
+      lines.push('')
+    })
+    lines.push(`合計: ${items.length}点`)
+    return lines.join('\n')
+  }, [items, categories])
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(aiExportText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId) ? prev.filter((c) => c !== categoryId) : [...prev, categoryId],
@@ -172,6 +204,36 @@ export function ItemListPage() {
       {sortOrder === 'custom' && (
         <p className="text-xs text-gray-400">カードの左上の「≡」をドラッグすると、カテゴリ内で並び順を変更できます</p>
       )}
+
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => setShowAiExport((prev) => !prev)}
+          className="self-start rounded-lg bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
+        >
+          {showAiExport ? '閉じる' : '🤖 AIに相談用テキストを出力'}
+        </button>
+        {showAiExport && (
+          <div className="flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-xs text-gray-500">
+              以下をコピーして ChatGPT・Claude などのAIに貼り付けると、購入アドバイスをもらえます。
+            </p>
+            <textarea
+              readOnly
+              value={aiExportText}
+              rows={12}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="self-start rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+            >
+              {copied ? 'コピーしました！' : 'コピー'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <p className="text-sm text-gray-400">読み込み中...</p>

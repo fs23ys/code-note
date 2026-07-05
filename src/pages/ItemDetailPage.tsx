@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { BrandInput } from '../components/BrandInput'
 import { PhotoUploader } from '../components/PhotoUploader'
 import { TagInput } from '../components/TagInput'
 import { useAuth } from '../hooks/useAuth'
@@ -14,6 +15,12 @@ export function ItemDetailPage() {
   const { user } = useAuth()
   const { items, loading } = useItems(user?.uid)
   const { categories } = useCategories(user?.uid)
+
+  const allBrands = useMemo(() => {
+    const set = new Set<string>()
+    items.forEach((item) => item.brand && set.add(item.brand))
+    return Array.from(set).sort()
+  }, [items])
   const navigate = useNavigate()
 
   const item = useMemo(() => items.find((i) => i.id === itemId), [items, itemId])
@@ -239,15 +246,10 @@ export function ItemDetailPage() {
         </select>
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-gray-600">
+      <div className="flex flex-col gap-1 text-sm text-gray-600">
         ブランド
-        <input
-          type="text"
-          value={brand}
-          onChange={(e) => setBrand(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
-        />
-      </label>
+        <BrandInput value={brand} onChange={setBrand} suggestions={allBrands} />
+      </div>
 
       <label className="flex flex-col gap-1 text-sm text-gray-600">
         購入店舗

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCategories } from '../hooks/useCategories'
@@ -6,11 +6,12 @@ import { useItems } from '../hooks/useItems'
 import { useOutfits } from '../hooks/useOutfits'
 import { generateOutfitSuggestion, type OutfitSuggestion } from '../lib/outfitSuggest'
 import { createOutfit } from '../lib/outfits'
+import { TAG_GROUPS } from '../lib/tagOrder'
 import type { Category } from '../types'
 
-// カテゴリ名は設定画面でいつでも変更できる(絵文字を付けたり「靴」→「シューズ」に変えたりも可能)ため、
-// 完全一致ではなくキーワードの部分一致でカテゴリIDを解決する
 const REQUIRED_KEYWORDS = [['トップス'], ['ボトムス'], ['靴', 'シューズ']]
+const SEASONS = TAG_GROUPS.find((g) => g.label === '季節')?.tags ?? ['春', '夏', '秋', '冬']
+const ALL_SEASON_TAGS = new Set(SEASONS)
 
 function resolveRequiredCategoryIds(categories: Category[]): string[] {
   return REQUIRED_KEYWORDS.map((keywords) =>
@@ -28,6 +29,7 @@ export function OutfitSuggestPage() {
   const [suggestion, setSuggestion] = useState<OutfitSuggestion | null>(null)
   const [attempted, setAttempted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [selectedSeason, setSelectedSeason] = useState('')
 
   const requiredCategoryIds = useMemo(() => resolveRequiredCategoryIds(categories), [categories])
   const optionalCategoryIds = useMemo(
@@ -35,19 +37,33 @@ export function OutfitSuggestPage() {
     [categories, requiredCategoryIds],
   )
 
+  const seasonFilteredItems = useMemo(() => {
+    if (!selectedSeason) return items
+    return items.filter((item) => {
+      const seasonTags = item.tags.filter((tag) => ALL_SEASON_TAGS.has(tag))
+      if (seasonTags.length === 0) return true // 季節タグなし = 通年アイテムとして含める
+      return item.tags.includes(selectedSeason)
+    })
+  }, [items, selectedSeason])
+
   const regenerate = useCallback(() => {
     setSuggestion(
-      generateOutfitSuggestion(items, outfits, {
+      generateOutfitSuggestion(seasonFilteredItems, outfits, {
         requiredCategories: requiredCategoryIds,
         optionalCategories: optionalCategoryIds,
       }),
     )
     setAttempted(true)
-  }, [items, outfits, requiredCategoryIds, optionalCategoryIds])
+  }, [seasonFilteredItems, outfits, requiredCategoryIds, optionalCategoryIds])
 
   useEffect(() => {
     if (!itemsLoading && !outfitsLoading && !categoriesLoading && !attempted) regenerate()
   }, [itemsLoading, outfitsLoading, categoriesLoading, attempted, regenerate])
+
+  const handleSeasonToggle = (season: string) => {
+    setSelectedSeason((prev) => (prev === season ? '' : season))
+    setAttempted(false)
+  }
 
   const handleSave = async () => {
     if (!user || !suggestion) return
@@ -55,7 +71,7 @@ export function OutfitSuggestPage() {
     try {
       const outfitId = await createOutfit(user.uid, {
         itemIds: suggestion.itemIds,
-        tags: [],
+        tags: selectedSeason ? [selectedSeason] : [],
         wornDates: [],
       })
       navigate(`/outfits/${outfitId}`)
@@ -75,11 +91,39 @@ export function OutfitSuggestPage() {
         トップス・ボトムス・靴を中心に、タグの一致度が高い組み合わせをランダムに提案します。
       </p>
 
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-gray-500">季節を絞り込む(任意)</p>
+        <div className="flex flex-wrap gap-2">
+          {SEASONS.map((season) => (
+            <button
+              key={season}
+              type="button"
+              onClick={() => handleSeasonToggle(season)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                selectedSeason === season
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700'
+              }`}
+            >
+              {season}
+            </button>
+          ))}
+        </div>
+        {selectedSeason && (
+          <p className="text-xs text-gray-400">
+            「{selectedSeason}」タグ付きアイテムと季節タグなし(通年)アイテムから提案します
+          </p>
+        )}
+      </div>
+
       {itemsLoading || outfitsLoading || categoriesLoading ? (
         <p className="text-sm text-gray-400">読み込み中...</p>
       ) : !suggestion ? (
         <p className="text-sm text-gray-400">
-          提案に必要なアイテム(トップス・ボトムス・靴)が不足しています。まずは服を登録してください。
+          提案に必要なアイテム(トップス・ボトムス・靴)が不足しています。
+          {selectedSeason
+            ? `「${selectedSeason}」タグのアイテムを追加するか、季節の絞り込みを外してください。`
+            : 'まずは服を登録してください。'}
         </p>
       ) : (
         <>
