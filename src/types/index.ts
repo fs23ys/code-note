@@ -25,11 +25,13 @@ export interface Outfit {
   memo?: string
   /** 着用した日付の一覧(YYYY-MM-DD形式) */
   wornDates: string[]
+  /** コーデ一覧でのカスタム並び順 */
+  order: number
   createdAt: number
   updatedAt: number
 }
 
-export type OutfitInput = Omit<Outfit, 'id' | 'createdAt' | 'updatedAt'>
+export type OutfitInput = Omit<Outfit, 'id' | 'order' | 'createdAt' | 'updatedAt'>
 
 export interface Category {
   id: string

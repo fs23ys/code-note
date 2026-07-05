@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { OutfitItemPicker } from '../components/OutfitItemPicker'
 import { TagInput } from '../components/TagInput'
 import { useAuth } from '../hooks/useAuth'
+import { useCategories } from '../hooks/useCategories'
 import { useItems } from '../hooks/useItems'
 import { useOutfits } from '../hooks/useOutfits'
 import { deleteOutfit, updateOutfit } from '../lib/outfits'
@@ -15,6 +17,7 @@ export function OutfitDetailPage() {
   const { outfitId } = useParams<{ outfitId: string }>()
   const { user } = useAuth()
   const { items } = useItems(user?.uid)
+  const { categories } = useCategories(user?.uid)
   const { outfits, loading } = useOutfits(user?.uid)
   const navigate = useNavigate()
 
@@ -42,10 +45,6 @@ export function OutfitDetailPage() {
     setMemo(outfit.memo ?? '')
     setSelectedItemIds(outfit.itemIds)
   }, [outfit])
-
-  const toggleItem = (itemId: string) => {
-    setSelectedItemIds((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]))
-  }
 
   const handleSave = async () => {
     if (!user || !outfit) return
@@ -147,32 +146,12 @@ export function OutfitDetailPage() {
         </>
       ) : (
         <>
-          <p className="text-sm text-gray-500">
-            組み合わせる服を2点以上選択してください({selectedItemIds.length}点選択中)
-          </p>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {items.map((item) => {
-              const selected = selectedItemIds.includes(item.id)
-              const photo = item.photos[item.mainPhotoIndex] ?? item.photos[0]
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => toggleItem(item.id)}
-                  className={`relative aspect-square overflow-hidden rounded-lg border-2 ${
-                    selected ? 'border-indigo-500' : 'border-gray-200'
-                  }`}
-                >
-                  {photo && <img src={photo} alt="" className="h-full w-full object-cover" />}
-                  {selected && (
-                    <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs text-white">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <OutfitItemPicker
+            items={items}
+            categories={categories}
+            selectedIds={selectedItemIds}
+            onChange={setSelectedItemIds}
+          />
 
           <label className="flex flex-col gap-1 text-sm text-gray-600">
             コーデ名

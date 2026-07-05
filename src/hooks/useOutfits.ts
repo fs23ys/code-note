@@ -19,6 +19,7 @@ export function useOutfits(uid: string | undefined) {
       setOutfits(
         snap.docs.map((d) => {
           const data = d.data()
+          const createdAt = toMillis(data.createdAt)
           return {
             id: d.id,
             name: data.name,
@@ -26,7 +27,8 @@ export function useOutfits(uid: string | undefined) {
             tags: data.tags ?? [],
             memo: data.memo,
             wornDates: data.wornDates ?? [],
-            createdAt: toMillis(data.createdAt),
+            order: data.order ?? createdAt,
+            createdAt,
             updatedAt: toMillis(data.updatedAt),
           } satisfies Outfit
         }),

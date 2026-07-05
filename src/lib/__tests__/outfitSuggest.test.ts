@@ -53,6 +53,7 @@ describe('generateOutfitSuggestion', () => {
         itemIds: ['top1', 'bottom1', 'shoe1'],
         tags: [],
         wornDates: [],
+        order: 0,
         createdAt: 0,
         updatedAt: 0,
       },

@@ -24,7 +24,6 @@ export function OutfitCard({ outfit, items }: { outfit: Outfit; items: ClosetIte
       </div>
       <div className="flex flex-col gap-0.5 p-2">
         <span className="truncate text-xs font-medium text-gray-800">{outfit.name || '名称未設定のコーデ'}</span>
-        <span className="text-xs text-gray-500">{outfitItems.length}点のアイテム</span>
       </div>
     </Link>
   )
