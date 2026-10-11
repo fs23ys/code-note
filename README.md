@@ -4,7 +4,7 @@
 
 ## 技術スタック
 
-React + Vite + TypeScript / Tailwind CSS / Firebase (Authentication, Firestore, Storage) / Netlify (Hosting)
+React + Vite + TypeScript / Tailwind CSS / Firebase (Authentication, Firestore, Storage) / GitHub Pages (Hosting)
 
 ## セットアップ
 
@@ -26,9 +26,15 @@ npm run dev
 
 ## デプロイ
 
-### サイト本体(Netlify)
+### サイト本体(GitHub Pages)
 
-GitHubリポジトリをNetlifyに連携し、Git pushで自動デプロイされる。ビルド設定は [netlify.toml](./netlify.toml) を参照(`npm run build` → `dist/` を公開)。Netlify側の環境変数に `.env.local` と同じ `VITE_FIREBASE_*` の値を設定する必要がある。
+`main` ブランチへのpushで [.github/workflows/deploy.yml](./.github/workflows/deploy.yml) が自動実行され、`npm run build` の成果物(`dist/`)がGitHub Pagesに公開される。初回のみ以下の手動設定が必要。
+
+1. リポジトリの Settings → Pages → Source を「GitHub Actions」にする
+2. Settings → Secrets and variables → Actions に、`.env.local` と同じ `VITE_FIREBASE_*` の値をリポジトリシークレットとして登録する(`VITE_FIREBASE_API_KEY` など6つ)
+3. Firebaseコンソール → Authentication → Settings → 承認済みドメイン に `<GitHubユーザー名>.github.io` を追加する(Googleログインを許可するため)
+
+公開URLは `https://<GitHubユーザー名>.github.io/code-note/`。SPAのルーティング(React Router)に対応するため、ビルド後に `dist/index.html` を `dist/404.html` としても複製している([package.json](./package.json) の `postbuild`)。
 
 ### Firestore / Storage セキュリティルール
 
